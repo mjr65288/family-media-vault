@@ -11,3 +11,70 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  familyMembers FamilyMember[]
+  uploadedMedia Media[]
+}
+
+model Family {
+  id         String   @id @default(cuid())
+  name       String
+  inviteCode String   @unique @default(cuid())
+  createdAt  DateTime @default(now())
+
+  members FamilyMember[]
+  albums  Album[]
+}
+
+model FamilyMember {
+  id       String           @id @default(cuid())
+  role     FamilyMemberRole @default(MEMBER)
+  joinedAt DateTime         @default(now())
+
+  userId   String
+  familyId String
+  user     User   @relation(fields: [userId], references: [id])
+  family   Family @relation(fields: [familyId], references: [id])
+
+  @@unique([userId, familyId])
+}
+
+enum FamilyMemberRole {
+  ADMIN
+  MEMBER
+}
+
+model Album {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now())
+
+  familyId String
+  family   Family  @relation(fields: [familyId], references: [id])
+  media    Media[]
+}
+
+model Media {
+  id        String    @id @default(cuid())
+  fileUrl   String
+  thumbUrl  String?
+  type      MediaType
+  createdAt DateTime  @default(now())
+
+  albumId      String
+  uploadedById String
+  album        Album  @relation(fields: [albumId], references: [id])
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
