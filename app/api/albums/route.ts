@@ -1,16 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 
 export async function POST(req: NextRequest) {
-  const userId = req.headers.get("x-user-id");
+  const session = await auth();
+  const userId = session?.user?.id;
+
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { title, familyId } = await req.json();
+  let body: unknown;
+
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const title =
+    typeof body === "object" &&
+    body !== null &&
+    "title" in body &&
+    typeof body.title === "string"
+      ? body.title.trim()
+      : "";
+  const familyId =
+    typeof body === "object" &&
+    body !== null &&
+    "familyId" in body &&
+    typeof body.familyId === "string"
+      ? body.familyId.trim()
+      : "";
+
   if (!title || !familyId) {
     return NextResponse.json(
       { error: "Title and familyId are required" },
+      { status: 400 }
+    );
+  }
+
+  if (title.length > 100 || familyId.length > 128) {
+    return NextResponse.json(
+      { error: "Album title or family id is invalid" },
       { status: 400 }
     );
   }
