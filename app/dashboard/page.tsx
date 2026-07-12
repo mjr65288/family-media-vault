@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -18,7 +19,7 @@ export default async function DashboardPage() {
       family: {
         include: {
           albums: {
-            select: { id: true },
+            select: { id: true, title: true },
           },
           members: {
             select: { id: true },
@@ -99,6 +100,20 @@ export default async function DashboardPage() {
                       </dd>
                     </div>
                   </dl>
+                  {membership.family.albums.length > 0 ? (
+                    <ul className="mt-5 space-y-2">
+                      {membership.family.albums.map((album) => (
+                        <li key={album.id}>
+                          <Link
+                            href={`/albums/${album.id}`}
+                            className="block rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-800 transition hover:border-teal-700 hover:text-teal-700"
+                          >
+                            {album.title}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                   {membership.role === "ADMIN" ? (
                     <div className="mt-5 rounded-md bg-stone-100 p-3">
                       <p className="text-xs font-medium uppercase tracking-[0.14em] text-zinc-500">

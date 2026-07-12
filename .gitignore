@@ -43,3 +43,9 @@ dev-server*.log
 next-env.d.ts
 
 /app/generated/prisma
+
+# skill registry cache
+.atl/
+
+# local media storage (single-process disk storage, see lib/storage.ts)
+/uploads/
