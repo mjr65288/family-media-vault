@@ -1,15 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 
 export async function POST(req: NextRequest) {
-  const userId = req.headers.get("x-user-id");
+  const session = await auth();
+  const userId = session?.user?.id;
+
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { inviteCode } = await req.json();
+  let body: unknown;
+
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const inviteCode =
+    typeof body === "object" &&
+    body !== null &&
+    "inviteCode" in body &&
+    typeof body.inviteCode === "string"
+      ? body.inviteCode.trim()
+      : "";
+
   if (!inviteCode) {
     return NextResponse.json({ error: "Invite code is required" }, { status: 400 });
+  }
+
+  if (inviteCode.length > 128) {
+    return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
   }
 
   // Check the family exists
