@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { FormEvent, useState } from "react";
 
+/**
+ * Client-side credentials sign-in form. Uses NextAuth's `signIn` with
+ * `redirect: false` so failed attempts can show an inline error instead of
+ * NextAuth performing its own full-page redirect/error flow.
+ */
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -25,10 +30,14 @@ export function LoginForm() {
     setPending(false);
 
     if (result?.error) {
+      // Deliberately generic message — avoids confirming whether the email
+      // exists (user enumeration).
       setError("Invalid email or password.");
       return;
     }
 
+    // router.refresh() re-runs server components so the new session cookie
+    // is picked up by the dashboard's server-side auth() check.
     router.replace("/dashboard");
     router.refresh();
   }

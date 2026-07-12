@@ -3,6 +3,11 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { RegisterForm } from "./RegisterForm";
 
+/**
+ * Registration route. Server component checks the session first so an
+ * already-authenticated user is redirected to the dashboard instead of
+ * being shown the sign-up form again.
+ */
 export default async function RegisterPage() {
   const session = await auth();
 

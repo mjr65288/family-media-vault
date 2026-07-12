@@ -1,5 +1,6 @@
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Discriminated result for input validators: either parsed `data` or a user-facing `error` string. */
 export type ValidationResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
@@ -15,14 +16,23 @@ export type LoginInput = {
   password: string;
 };
 
+// Narrows `unknown` request-body JSON before touching its properties, since
+// `JSON.parse` results (and thus `credentials` in auth.ts) are untyped.
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+/** Trims and lowercases an email so lookups/comparisons are case- and whitespace-insensitive. */
 export function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+/**
+ * Validates and normalizes registration input from an untrusted request body.
+ * Returns a typed {@link RegisterInput} on success, or a generic user-facing
+ * error otherwise (errors are intentionally non-specific to avoid leaking
+ * which field/rule failed).
+ */
 export function validateRegisterInput(input: unknown): ValidationResult<RegisterInput> {
   if (!isRecord(input)) {
     return { ok: false, error: "Invalid request body" };
@@ -55,6 +65,14 @@ export function validateRegisterInput(input: unknown): ValidationResult<Register
   return { ok: true, data: { name, email, password } };
 }
 
+/**
+ * Validates login input from an untrusted request body. Deliberately looser
+ * than {@link validateRegisterInput} (no minimum password length) since this
+ * only gates the shape of the request before hitting authorize() — the real
+ * password check happens against the stored hash, and error messages here
+ * stay generic ("Invalid email or password") to avoid confirming which part
+ * was wrong.
+ */
 export function validateLoginInput(input: unknown): ValidationResult<LoginInput> {
   if (!isRecord(input)) {
     return { ok: false, error: "Invalid request body" };

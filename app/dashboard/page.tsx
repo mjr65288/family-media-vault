@@ -6,9 +6,16 @@ import { prisma } from "@/lib/prisma";
 import { FamilyActions } from "./FamilyActions";
 import { SignOutButton } from "./SignOutButton";
 
+/**
+ * Authenticated dashboard. Server component so it can fetch the caller's
+ * family memberships (with nested albums/members) directly via Prisma
+ * before rendering, instead of round-tripping through a client-side fetch.
+ */
 export default async function DashboardPage() {
   const session = await auth();
 
+  // Gate before any data fetching: an unauthenticated request must never
+  // reach the Prisma query below.
   if (!session?.user?.id) {
     redirect("/login");
   }

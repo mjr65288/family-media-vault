@@ -76,6 +76,130 @@ Visit `http://localhost:3000` → register → create a family → create an alb
 - Route Handlers in Next.js 16 have **no built-in body size limit** (the 1MB cap you may recall only applies to Server Actions). The upload route enforces its own caps: 15MB photos / 200MB videos, checked via `Content-Length` before reading the body, then re-verified against the actual bytes read.
 - Any route touching `fs`/streams must declare `export const runtime = "nodejs"` — the Edge runtime has no filesystem access.
 
+## Application flow
+
+### Auth flow: register → login → JWT session → protected routes
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant RegisterRoute as POST /api/auth/register
+    participant LoginRoute as Credentials provider (auth.ts)
+    participant DB as Postgres (Prisma)
+    participant Page as Protected page (e.g. /dashboard)
+
+    Browser->>RegisterRoute: POST { name, email, password }
+    RegisterRoute->>RegisterRoute: validateRegisterInput()
+    RegisterRoute->>DB: check email unique, bcrypt.hash(password)
+    DB-->>RegisterRoute: User created
+    RegisterRoute-->>Browser: 201 Created
+
+    Browser->>LoginRoute: signIn("credentials", { email, password })
+    LoginRoute->>LoginRoute: validateLoginInput() + checkRateLimit()
+    LoginRoute->>DB: findUnique(User by email)
+    alt user not found
+        LoginRoute->>LoginRoute: dummy bcrypt.compare() (timing-attack mitigation)
+        LoginRoute-->>Browser: null (login failed)
+    else user found
+        LoginRoute->>LoginRoute: bcrypt.compare(password, passwordHash)
+        LoginRoute-->>Browser: session cookie (JWT, 7-day maxAge)
+    end
+
+    Browser->>Page: GET /dashboard (cookie attached)
+    Page->>Page: auth() reads/verifies JWT
+    alt no valid session
+        Page-->>Browser: redirect to /login
+    else valid session
+        Page->>DB: load user's family/albums
+        Page-->>Browser: 200 rendered page
+    end
+```
+
+Note: sessions are JWT-only — there is no `Session`/`Account` table. The JWT carries `sub` (user id), set once at sign-in via the `jwt` callback and copied into `session.user.id` via the `session` callback (see `next-auth.d.ts` for the augmented type).
+
+### Domain model relationships
+
+```mermaid
+erDiagram
+    User ||--o{ FamilyMember : "has"
+    Family ||--o{ FamilyMember : "has"
+    User ||--o{ Media : "uploads"
+    Family ||--o{ Album : "has"
+    Album ||--o{ Media : "contains"
+
+    User {
+        string id
+        string name
+        string email
+        string passwordHash
+    }
+    Family {
+        string id
+        string name
+        string inviteCode
+    }
+    FamilyMember {
+        string id
+        string role "ADMIN or MEMBER"
+        string userId
+        string familyId
+    }
+    Album {
+        string id
+        string title
+        string familyId
+    }
+    Media {
+        string id
+        string fileUrl "opaque storage key"
+        string thumbUrl
+        string type "PHOTO or VIDEO"
+        string albumId
+        string uploadedById
+    }
+```
+
+`FamilyMember` is the join table between `User` and `Family` (unique on `[userId, familyId]`), carrying the `role`. Every `Album` and `Media` row is reachable only via its `familyId`/`albumId` — there is no direct `User`-to-`Media` visibility check other than "is this user a member of the family that owns this album."
+
+### Request flow: viewing an album
+
+```mermaid
+flowchart TD
+    A[Client: GET /albums/albumId] --> B[Server component: auth]
+    B -->|no session| C[401 / redirect to /login]
+    B -->|session ok| D["prisma.album.findUnique(albumId)"]
+    D -->|not found| E[404]
+    D -->|found| F["requireFamilyMembership(userId, album.familyId)"]
+    F -->|not-found| E
+    F -->|forbidden| G[403]
+    F -->|ok| H["prisma media findMany for album"]
+    H --> I[Render gallery + UploadForm]
+```
+
+### Request flow: uploading media
+
+```mermaid
+flowchart TD
+    A["Client: POST /api/albums/albumId/media (multipart)"] --> B[auth: verify session]
+    B -->|no session| C[401]
+    B -->|session ok| D["prisma.album.findUnique(albumId)"]
+    D -->|not found| E[404]
+    D -->|found| F["requireFamilyMembership(userId, album.familyId)"]
+    F -->|forbidden| G[403]
+    F -->|not-found| E
+    F -->|ok, BEFORE reading body| H[Check Content-Length against size cap]
+    H -->|over cap| I[413 / 400]
+    H -->|within cap| J[Read body, validate MIME + re-check actual byte size]
+    J -->|invalid| I
+    J -->|valid| K["lib/storage.ts putFile()"]
+    K --> L["prisma.media.create()"]
+    L --> M[201 with media metadata]
+```
+
+Membership is checked **before** the request body is read or parsed in both flows — a non-member is rejected without the server ever buffering/streaming their upload payload, and without confirming whether the album exists (404 vs 403, per `lib/auth-helpers.ts`'s `MembershipResult` convention).
+
+See `ARCHITECTURE.md` for a file-by-file reference of every module referenced in these diagrams.
+
 ## Where things live
 
 | Concern | Path |
@@ -87,6 +211,7 @@ Visit `http://localhost:3000` → register → create a family → create an alb
 | Shared authorization check | `lib/auth-helpers.ts` (`requireFamilyMembership`) |
 | Family/album/media API routes | `app/api/families/`, `app/api/albums/`, `app/api/media/` |
 | Dashboard & album UI | `app/dashboard/`, `app/albums/[albumId]/` |
+| Full file-by-file reference | `ARCHITECTURE.md` |
 
 ## Verifying a change before you open a PR
 

@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   description: "A private place for families to organize shared memories.",
 };
 
+/**
+ * Root layout applied to every route. Wires up the Geist font variables and
+ * wraps all pages in a full-height flex column so pages can rely on `flex-1`
+ * layouts without repeating the shell markup.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

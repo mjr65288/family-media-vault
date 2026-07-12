@@ -3,6 +3,11 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { LoginForm } from "./LoginForm";
 
+/**
+ * Login route. Server component checks the session first so a signed-in
+ * user is bounced straight to the dashboard instead of seeing the form
+ * (also prevents re-submitting credentials while already authenticated).
+ */
 export default async function LoginPage() {
   const session = await auth();
 
