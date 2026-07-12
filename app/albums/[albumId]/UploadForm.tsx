@@ -8,6 +8,11 @@ import { FormEvent, useState } from "react";
 const MAX_PHOTO_BYTES = 15 * 1024 * 1024; // 15 MB
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024; // 200 MB
 
+/**
+ * Media upload form for a single album. Validates file presence and size
+ * client-side for immediate feedback; the server route re-validates
+ * authoritatively before writing anything.
+ */
 export function UploadForm({ albumId }: { albumId: string }) {
   const router = useRouter();
   const [error, setError] = useState("");

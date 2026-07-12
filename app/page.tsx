@@ -3,9 +3,15 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 
+/**
+ * Public marketing landing page. Renders as a server component so the
+ * session check and redirect happen before any HTML reaches the client,
+ * avoiding a flash of the marketing page for already-authenticated users.
+ */
 export default async function Home() {
   const session = await auth();
 
+  // Already-authenticated visitors have no reason to see the marketing page.
   if (session?.user) {
     redirect("/dashboard");
   }

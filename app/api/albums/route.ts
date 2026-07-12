@@ -2,7 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
+/**
+ * Creates an Album under a given Family.
+ *
+ * Requires an authenticated session AND that the requester be an ADMIN
+ * member of the target family (regular MEMBERs cannot create albums).
+ *
+ * Status codes: 401 unauthenticated, 400 missing/invalid title or familyId,
+ * 403 not an admin of that family, 201 created.
+ */
 export async function POST(req: NextRequest) {
+  // Auth check happens before body parsing — reject unauthenticated callers
+  // before reading/parsing the request body.
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -47,7 +58,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Verify the user is an ADMIN of this family
+  // Verify the user is an ADMIN of this family. Note: this route checks the
+  // role directly rather than via requireFamilyMembership, since album
+  // creation additionally requires ADMIN (not just any membership).
   const membership = await prisma.familyMember.findUnique({
     where: {
       userId_familyId: { userId, familyId },

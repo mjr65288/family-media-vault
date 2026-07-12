@@ -5,6 +5,15 @@ import bcrypt from "bcryptjs";
 import { validateRegisterInput } from "@/lib/auth-validation";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
+/**
+ * Registers a new user account.
+ *
+ * No auth required (this is how accounts are created). Rate-limited per
+ * client IP (3 attempts/hour) to slow down account-creation abuse.
+ *
+ * Status codes: 400 invalid JSON/input, 409 email already registered,
+ * 429 rate-limited, 201 created.
+ */
 export async function POST(req: NextRequest) {
   let body: unknown;
 
@@ -55,6 +64,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
+    // Belt-and-braces: the findUnique check above already covers the common
+    // race, but a concurrent request can still slip through between the
+    // check and the create — P2002 is Prisma's unique-constraint violation.
     if (
       typeof error === "object" &&
       error !== null &&

@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { FormEvent, useState } from "react";
 
+/**
+ * Client-side registration form. Creates the account via the API route
+ * first, then immediately signs in with the same credentials so the user
+ * lands in an authenticated session without a separate manual login step.
+ */
 export function RegisterForm() {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -48,6 +53,9 @@ export function RegisterForm() {
     setPending(false);
 
     if (result?.error) {
+      // Account was created but the immediate sign-in failed for some
+      // reason — send them to login rather than surfacing a confusing
+      // "account exists but couldn't sign in" state here.
       router.replace("/login");
       return;
     }

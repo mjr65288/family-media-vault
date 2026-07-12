@@ -28,6 +28,17 @@ const PHOTO_MIME_TYPES = new Set([
 
 const VIDEO_MIME_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 
+/**
+ * Uploads a Photo or Video into an Album via multipart form data.
+ *
+ * Requires an authenticated session and membership (any role) in the
+ * album's owning family. Stores the file via lib/storage.ts and persists
+ * the returned opaque key as Media.fileUrl.
+ *
+ * Status codes: 401 unauthenticated, 404 album doesn't exist, 403 exists
+ * but requester isn't a member of its family, 413 file too large,
+ * 415 unsupported MIME type, 400 missing/invalid form data, 201 created.
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ albumId: string }> }
@@ -47,6 +58,8 @@ export async function POST(
   });
 
   if (!album) {
+    // 404 (doesn't exist) vs. 403 (exists, not a member) — see
+    // MembershipResult convention in lib/auth-helpers.ts.
     return NextResponse.json({ error: "Album not found" }, { status: 404 });
   }
 
@@ -55,6 +68,10 @@ export async function POST(
   if (membership.status === "forbidden") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  // Membership is verified BEFORE reading the request body (formData()
+  // below) — non-members are rejected before we spend any effort parsing
+  // or buffering an upload we'd just discard.
 
   // Content-Length pre-check BEFORE buffering the body — the primary
   // shield against memory exhaustion, since Route Handlers enforce no

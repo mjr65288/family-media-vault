@@ -3,6 +3,11 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+/**
+ * Dashboard controls for creating a new family or joining one via invite
+ * code. Both forms share a single `pendingAction` state so only one submit
+ * can be in flight at a time across the two forms.
+ */
 export function FamilyActions() {
   const router = useRouter();
   const [createError, setCreateError] = useState("");
@@ -11,6 +16,11 @@ export function FamilyActions() {
     null
   );
 
+  /**
+   * Shared submit handler for both forms: posts JSON to `endpoint`, resets
+   * the form on success, and refreshes the router so the server-rendered
+   * membership list picks up the new/joined family.
+   */
   async function submitJson(
     event: FormEvent<HTMLFormElement>,
     endpoint: string,

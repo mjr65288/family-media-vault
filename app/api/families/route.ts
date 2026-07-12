@@ -2,7 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
+/**
+ * Creates a new Family and adds the requesting user as its ADMIN member.
+ *
+ * Requires an authenticated session; no family membership is needed since
+ * this is how a family comes into existence.
+ *
+ * Status codes: 401 unauthenticated, 400 missing/invalid name, 201 created.
+ */
 export async function POST(req: NextRequest) {
+  // Auth check happens before body parsing — an unauthenticated caller is
+  // rejected without the cost/risk of reading and parsing the request body.
   const session = await auth();
   const userId = session?.user?.id;
 

@@ -6,6 +6,7 @@ import { requireFamilyMembership } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { UploadForm } from "./UploadForm";
 
+/** Static placeholder icon shown in place of a thumbnail for video media. */
 function VideoPlaceholderIcon() {
   return (
     <svg
@@ -25,6 +26,10 @@ function VideoPlaceholderIcon() {
   );
 }
 
+/**
+ * Album detail page: shows an album's media grid and upload form, gated by
+ * both authentication and family membership.
+ */
 export default async function AlbumDetailPage({
   params,
 }: {
@@ -46,6 +51,9 @@ export default async function AlbumDetailPage({
     },
   });
 
+  // Checked before the membership lookup: a nonexistent album should 404
+  // regardless of who's asking, rather than leaking a "forbidden" vs. "not
+  // found" distinction that could confirm an album ID's existence.
   if (!album) {
     notFound();
   }

@@ -4,6 +4,15 @@ import { auth } from "@/auth";
 import { requireFamilyMembership } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
+/**
+ * Fetches an Album (with its Media items) by id.
+ *
+ * Requires an authenticated session and membership in the album's owning
+ * family (any role).
+ *
+ * Status codes: 401 unauthenticated, 404 album doesn't exist, 403 exists
+ * but requester isn't a member of its family, 200 ok.
+ */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ albumId: string }> }
@@ -39,6 +48,9 @@ export async function GET(
   });
 
   if (!album) {
+    // 404 here (album doesn't exist), distinct from the 403 below (album
+    // exists, requester just isn't a member) — see MembershipResult
+    // convention in lib/auth-helpers.ts.
     return NextResponse.json({ error: "Album not found" }, { status: 404 });
   }
 
