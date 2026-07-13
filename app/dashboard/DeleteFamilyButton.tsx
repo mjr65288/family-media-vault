@@ -3,11 +3,23 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 /**
- * Admin-only "delete family" control. Confirms via `ConfirmDialog` since
- * this is destructive and cascades to every album/media under the family.
+ * Admin-only "delete family" control. Confirms via shadcn's AlertDialog
+ * (built on Radix — focus trap, Escape-to-close, and centering come for
+ * free) since this is destructive and cascades to every album/media under
+ * the family.
  */
 export function DeleteFamilyButton({
   familyId,
@@ -30,7 +42,6 @@ export function DeleteFamilyButton({
     });
 
     setIsDeleting(false);
-    setShowConfirm(false);
 
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as {
@@ -45,23 +56,39 @@ export function DeleteFamilyButton({
 
   return (
     <div className="mt-3">
-      <button
+      <Button
         type="button"
+        variant="destructive"
         onClick={() => setShowConfirm(true)}
-        className="h-10 cursor-pointer rounded-md border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+        className="h-11 text-sm"
       >
         Delete family
-      </button>
-      {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
-      <ConfirmDialog
-        open={showConfirm}
-        title={`Delete "${familyName}"?`}
-        description="This permanently deletes all its albums and media. This cannot be undone."
-        confirmLabel="Delete family"
-        isPending={isDeleting}
-        onConfirm={() => void onDelete()}
-        onCancel={() => setShowConfirm(false)}
-      />
+      </Button>
+      {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete &quot;{familyName}&quot;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes all its albums and media. This cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting} className="h-11">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isDeleting}
+              onClick={() => void onDelete()}
+              className="h-11"
+            >
+              {isDeleting ? "Deleting..." : "Delete family"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

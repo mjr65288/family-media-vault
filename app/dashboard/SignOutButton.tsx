@@ -2,6 +2,8 @@
 
 import { signOut } from "next-auth/react";
 
+import { Button } from "@/components/ui/button";
+
 /**
  * Signs the current user out and sends them to the login page. Kept as its
  * own client component so the surrounding dashboard header can stay a
@@ -9,12 +11,13 @@ import { signOut } from "next-auth/react";
  */
 export function SignOutButton() {
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       onClick={() => signOut({ callbackUrl: "/login" })}
-      className="h-10 rounded-md border border-zinc-300 px-4 text-sm font-semibold text-zinc-900 transition hover:border-zinc-500"
+      className="h-11 text-sm"
     >
       Sign out
-    </button>
+    </Button>
   );
 }

@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { FormEvent, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 /**
  * Client-side registration form. Creates the account via the API route
  * first, then immediately signs in with the same credentials so the user
@@ -66,38 +70,32 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <label htmlFor="name" className="text-sm font-medium text-zinc-800">
-          Name
-        </label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="name">Name</Label>
+        <Input
           id="name"
           name="name"
           type="text"
           autoComplete="name"
           required
           maxLength={100}
-          className="mt-2 h-12 w-full rounded-md border border-zinc-300 bg-white px-3 text-base outline-none transition focus:border-teal-700 focus:ring-4 focus:ring-teal-100"
+          className="h-12 text-base"
         />
       </div>
-      <div>
-        <label htmlFor="email" className="text-sm font-medium text-zinc-800">
-          Email
-        </label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
           id="email"
           name="email"
           type="email"
           autoComplete="email"
           required
-          className="mt-2 h-12 w-full rounded-md border border-zinc-300 bg-white px-3 text-base outline-none transition focus:border-teal-700 focus:ring-4 focus:ring-teal-100"
+          className="h-12 text-base"
         />
       </div>
-      <div>
-        <label htmlFor="password" className="text-sm font-medium text-zinc-800">
-          Password
-        </label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
           id="password"
           name="password"
           type="password"
@@ -105,24 +103,20 @@ export function RegisterForm() {
           required
           minLength={12}
           maxLength={128}
-          className="mt-2 h-12 w-full rounded-md border border-zinc-300 bg-white px-3 text-base outline-none transition focus:border-teal-700 focus:ring-4 focus:ring-teal-100"
+          className="h-12 text-base"
         />
       </div>
       {error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="h-12 w-full rounded-md bg-zinc-950 px-5 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <Button type="submit" disabled={pending} className="h-12 w-full text-sm">
         {pending ? "Creating account..." : "Create account"}
-      </button>
-      <p className="text-center text-sm text-zinc-600">
+      </Button>
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/login" className="font-semibold text-teal-700">
+        <Link href="/login" className="font-semibold text-primary">
           Sign in
         </Link>
       </p>
