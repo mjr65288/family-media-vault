@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MobileNav } from "@/components/MobileNav";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const NAV_LINKS = [{ href: "/dashboard", label: "Dashboard" }];
 
@@ -22,18 +23,21 @@ export function AuthenticatedShell({
           <Link href="/dashboard" className="text-sm font-semibold text-foreground">
             Family Media Vault
           </Link>
-          <nav className="hidden gap-4 sm:flex">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <MobileNav links={NAV_LINKS} />
+          <div className="flex items-center gap-2">
+            <nav className="hidden gap-4 sm:flex">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex items-center text-sm font-medium text-muted-foreground transition hover:text-foreground"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+            <ThemeToggle />
+            <MobileNav links={NAV_LINKS} />
+          </div>
         </div>
       </header>
       {children}

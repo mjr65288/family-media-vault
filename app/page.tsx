@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 /**
  * Public marketing landing page. Renders as a server component so the
@@ -19,7 +20,10 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <section className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-6 py-16">
+      <div className="mx-auto flex w-full max-w-5xl justify-end px-6 pt-6">
+        <ThemeToggle />
+      </div>
+      <section className="mx-auto flex min-h-[calc(100vh-4.25rem)] w-full max-w-5xl flex-col justify-center px-6 pb-16">
         <div className="max-w-2xl">
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-primary">
             Family Media Vault

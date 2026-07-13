@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { RegisterForm } from "./RegisterForm";
 
 /**
@@ -17,7 +18,10 @@ export default async function RegisterPage() {
 
   return (
     <main className="min-h-screen bg-background px-6 py-12 text-foreground">
-      <div className="mx-auto grid min-h-[calc(100vh-6rem)] w-full max-w-5xl items-center gap-12 md:grid-cols-[1fr_420px]">
+      <div className="mx-auto flex w-full max-w-5xl justify-end">
+        <ThemeToggle />
+      </div>
+      <div className="mx-auto grid min-h-[calc(100vh-9.5rem)] w-full max-w-5xl items-center gap-12 md:grid-cols-[1fr_420px]">
         <section>
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-primary">
             Start the vault
