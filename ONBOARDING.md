@@ -75,6 +75,9 @@ Visit `http://localhost:3000` → register → create a family → create an alb
 - **`fileUrl` on `Media` is an opaque storage key, not a public URL.** The only way to read file bytes is `GET /api/media/[mediaId]`, which re-checks family membership on every request before streaming.
 - Route Handlers in Next.js 16 have **no built-in body size limit** (the 1MB cap you may recall only applies to Server Actions). The upload route enforces its own caps: 15MB photos / 200MB videos, checked via `Content-Length` before reading the body, then re-verified against the actual bytes read.
 - Any route touching `fs`/streams must declare `export const runtime = "nodejs"` — the Edge runtime has no filesystem access.
+- **In `async` form submit handlers, capture `event.currentTarget` into a variable before your first `await`.** React clears `currentTarget` once the event finishes dispatching, so `event.currentTarget.reset()` *after* an `await fetch(...)` throws `Cannot read properties of null`. `UploadForm.tsx`, `FamilyActions.tsx`, and `CreateAlbumForm.tsx` all follow the `const form = event.currentTarget;` pattern at the top of the handler — copy that, not the naive version.
+- **`prisma.config.ts` loads env vars via `dotenv/config`, which only reads `.env`, not `.env.local`.** Next.js itself auto-loads `.env.local`, so `npm run dev` works fine with `DATABASE_URL` only in `.env.local` — but the Prisma CLI (`prisma migrate dev`, `prisma studio`, etc.) will NOT see it and fails with "The datasource.url property is required". Either add a plain `.env` with `DATABASE_URL`, or pass it inline: `DATABASE_URL=... npx prisma migrate dev`.
+- **Deleting a Family or Album cascades in the database** (`onDelete: Cascade` on `FamilyMember.family`, `Album.family`, `Media.album` in `prisma/schema.prisma`) but **not on disk** — the `DELETE` routes (`app/api/families/[familyId]/route.ts`, `app/api/albums/[albumId]/route.ts`) read every affected `Media.fileUrl` *before* the DB delete, then call `deleteFile()` (`lib/storage.ts`) for each one *after* the DB delete succeeds. If you add a new relation under Family/Album, make sure it either cascades in the schema too or is cleaned up explicitly — Prisma relations default to `RESTRICT`, not cascade.
 
 ## Application flow
 
@@ -209,8 +212,8 @@ See `ARCHITECTURE.md` for a file-by-file reference of every module referenced in
 | Prisma client import | `lib/prisma.ts` (points at `app/generated/prisma`) |
 | Storage abstraction | `lib/storage.ts` |
 | Shared authorization check | `lib/auth-helpers.ts` (`requireFamilyMembership`) |
-| Family/album/media API routes | `app/api/families/`, `app/api/albums/`, `app/api/media/` |
-| Dashboard & album UI | `app/dashboard/`, `app/albums/[albumId]/` |
+| Family/album/media API routes | `app/api/families/` (create, join, `[familyId]` delete), `app/api/albums/` (create, `[albumId]` get/delete), `app/api/media/` |
+| Dashboard & album UI | `app/dashboard/` (family list, `CreateAlbumForm` + `DeleteFamilyButton` for admins), `app/albums/[albumId]/` (media grid, upload, `DeleteAlbumButton` for admins) |
 | Full file-by-file reference | `ARCHITECTURE.md` |
 
 ## Verifying a change before you open a PR
@@ -220,4 +223,26 @@ npx tsc --noEmit
 npx eslint .
 ```
 
-There's no automated test suite, so manually exercise the flow you touched (register/login/family/album/upload/view) against a real Postgres instance — curl or the browser both work.
+**There's no automated test suite and no `npm test` script.** `@playwright/test` is listed in `devDependencies`, but there's no `playwright.config.ts` and no test files anywhere in the repo — treat it as an unconfigured placeholder, not a working test runner. If you want to add real Playwright coverage, you'll need to write the config from scratch; check with the team before doing so (see the "no test suite yet" constraint above).
+
+Until then, verification is manual. Exercise the full flow against a real Postgres instance (local or the Docker one-liner above):
+
+1. **Register** — go to `/register`, create an account. Confirms `POST /api/auth/register` (email uniqueness, bcrypt hashing).
+2. **Login** — go to `/login` with those credentials. Confirms the Credentials provider + JWT session cookie is issued (`auth.ts`).
+3. **Create a family** — from `/dashboard`, use "Create a family". Confirms `POST /api/families` and that you land as `ADMIN` with an invite code shown.
+4. **Join a family** — open a second browser (or incognito window), register a second user, and join using the invite code from step 3. Confirms `POST /api/families/join` and the `MEMBER` role path.
+5. **Create an album and upload media** — as the `ADMIN`, use the "New album name" form on the family card (`CreateAlbumForm`, only rendered for admins) to create an album, then open it and upload a small photo and a video. Confirms `POST /api/albums` (admin-only — `MEMBER`s can't create albums) and the upload route's size/MIME checks (`lib/storage.ts`, 15MB photo / 200MB video caps), and that the file round-trips through `GET /api/media/[mediaId]`.
+6. **Cross-family isolation** — as the second user, try hitting an album URL that belongs to a family you're *not* a member of. Confirms `requireFamilyMembership` returns 403/404 correctly (see "Request flow: viewing an album" above).
+7. **Delete an album** — as the `ADMIN`, use "Delete album" on the album page. Confirms `DELETE /api/albums/[albumId]` (admin-only), that its media rows cascade-delete, and that the uploaded files are actually removed from `uploads/` on disk (not just the DB rows).
+8. **Delete a family** — as the `ADMIN`, use "Delete family" on the dashboard. Confirms `DELETE /api/families/[familyId]` (admin-only), that members/albums/media all cascade-delete, and that every file under all of that family's albums is removed from disk.
+9. **Sign out / session expiry** — use the sign-out button, then hit `/dashboard` directly. Confirms the redirect-to-login guard on server components.
+
+For quick API-only checks without the browser, `curl` works too, e.g.:
+
+```bash
+curl -i -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test User","email":"test@example.com","password":"correcthorsebatterystaple"}'
+```
+
+Whatever change you made, re-run the specific step(s) of this flow it touches — don't skip straight to "looks fine in the browser" for anything that changes auth, membership checks, or the upload path, since those are the parts most likely to fail silently.
