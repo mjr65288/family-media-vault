@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { CreateAlbumForm } from "./CreateAlbumForm";
+import { DeleteFamilyButton } from "./DeleteFamilyButton";
 import { FamilyActions } from "./FamilyActions";
 import { SignOutButton } from "./SignOutButton";
 
@@ -122,14 +124,21 @@ export default async function DashboardPage() {
                     </ul>
                   ) : null}
                   {membership.role === "ADMIN" ? (
-                    <div className="mt-5 rounded-md bg-stone-100 p-3">
-                      <p className="text-xs font-medium uppercase tracking-[0.14em] text-zinc-500">
-                        Invite code
-                      </p>
-                      <p className="mt-1 break-all font-mono text-sm">
-                        {membership.family.inviteCode}
-                      </p>
-                    </div>
+                    <>
+                      <div className="mt-5 rounded-md bg-stone-100 p-3">
+                        <p className="text-xs font-medium uppercase tracking-[0.14em] text-zinc-500">
+                          Invite code
+                        </p>
+                        <p className="mt-1 break-all font-mono text-sm">
+                          {membership.family.inviteCode}
+                        </p>
+                      </div>
+                      <CreateAlbumForm familyId={membership.family.id} />
+                      <DeleteFamilyButton
+                        familyId={membership.family.id}
+                        familyName={membership.family.name}
+                      />
+                    </>
                   ) : null}
                 </article>
               ))}

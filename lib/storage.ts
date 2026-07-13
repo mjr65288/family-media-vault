@@ -22,7 +22,7 @@
 
 import { randomUUID } from "crypto";
 import { createReadStream } from "fs";
-import { mkdir, readFile, stat, writeFile } from "fs/promises";
+import { mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
 import path from "path";
 import { Readable } from "stream";
 
@@ -122,6 +122,23 @@ export async function getStream(
   const webStream = Readable.toWeb(nodeStream) as ReadableStream;
 
   return { stream: webStream, size };
+}
+
+/**
+ * Deletes the file for a key. Swallows ENOENT (already gone) so cleanup
+ * after a DB cascade delete is idempotent — callers loop over media rows
+ * that were fetched before the DB delete, and shouldn't fail the whole
+ * cleanup if one file was already removed.
+ */
+export async function deleteFile(key: string): Promise<void> {
+  try {
+    const filePath = resolveKeyPath(key);
+    await unlink(filePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
+    }
+  }
 }
 
 /** Optional stat lookup, used for rollback/cleanup symmetry. Returns null if missing. */

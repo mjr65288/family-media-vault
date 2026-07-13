@@ -29,6 +29,10 @@ export function FamilyActions() {
     action: "create" | "join"
   ) {
     event.preventDefault();
+    // Captured synchronously: React nulls out event.currentTarget once the
+    // event finishes dispatching, so it's gone by the time this resumes
+    // after the `await` below.
+    const form = event.currentTarget;
     errorSetter("");
     setPendingAction(action);
 
@@ -48,7 +52,7 @@ export function FamilyActions() {
       return;
     }
 
-    event.currentTarget.reset();
+    form.reset();
     router.refresh();
   }
 

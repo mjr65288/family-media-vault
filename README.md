@@ -28,6 +28,10 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run start` | Run the production build |
 | `npm run lint` | ESLint (no separate formatter configured) |
 
+## Testing changes
+
+There's no automated test suite yet — see [ONBOARDING.md § Verifying a change before you open a PR](./ONBOARDING.md#verifying-a-change-before-you-open-a-pr) for the manual flow to exercise (register → login → family → album → upload → view) before opening a PR.
+
 ## Learn more
 
 - [Next.js Documentation](https://nextjs.org/docs)

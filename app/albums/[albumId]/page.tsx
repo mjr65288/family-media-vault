@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { requireFamilyMembership } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { DeleteAlbumButton } from "./DeleteAlbumButton";
 import { UploadForm } from "./UploadForm";
 
 /** Static placeholder icon shown in place of a thumbnail for video media. */
@@ -86,11 +87,16 @@ export default async function AlbumDetailPage({
           &larr; Back to dashboard
         </Link>
 
-        <header className="mt-4 flex flex-col gap-2 border-b border-zinc-200 pb-6">
-          <p className="text-sm font-medium uppercase tracking-[0.18em] text-teal-700">
-            {album.family.name}
-          </p>
-          <h1 className="text-3xl font-semibold">{album.title}</h1>
+        <header className="mt-4 flex flex-col gap-2 border-b border-zinc-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-teal-700">
+              {album.family.name}
+            </p>
+            <h1 className="text-3xl font-semibold">{album.title}</h1>
+          </div>
+          {membership.status === "ok" && membership.role === "ADMIN" ? (
+            <DeleteAlbumButton albumId={album.id} albumTitle={album.title} />
+          ) : null}
         </header>
 
         <section className="mt-8">
