@@ -47,7 +47,7 @@ export default async function AccountPage() {
           <section className="mt-8">
             <Card>
               <CardHeader>
-                <CardTitle>Name</CardTitle>
+                <CardTitle>Display name</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChangeNameForm currentName={user.name} />
