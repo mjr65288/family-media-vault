@@ -61,7 +61,7 @@ export function DeleteAlbumButton({
         type="button"
         variant="destructive"
         onClick={() => setShowConfirm(true)}
-        className="h-10 text-sm"
+        className="h-11 text-sm"
       >
         Delete album
       </Button>
@@ -75,11 +75,14 @@ export function DeleteAlbumButton({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting} className="h-11">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={isDeleting}
               onClick={() => void onDelete()}
+              className="h-11"
             >
               {isDeleting ? "Deleting..." : "Delete album"}
             </AlertDialogAction>

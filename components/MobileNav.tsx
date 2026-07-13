@@ -28,7 +28,7 @@ export function MobileNav({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="sm:hidden">
+        <Button variant="ghost" size="icon" className="h-11 w-11 sm:hidden">
           <MenuIcon />
           <span className="sr-only">Open menu</span>
         </Button>
@@ -42,7 +42,7 @@ export function MobileNav({
             <SheetClose key={link.href} asChild>
               <Link
                 href={link.href}
-                className="rounded-md px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent"
+                className="flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-foreground transition hover:bg-accent"
               >
                 {link.label}
               </Link>

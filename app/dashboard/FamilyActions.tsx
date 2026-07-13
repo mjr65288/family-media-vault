@@ -78,7 +78,13 @@ export function FamilyActions() {
         <h2 className="text-lg font-semibold">Create a family</h2>
         <div className="mt-5 space-y-2">
           <Label htmlFor="family-name">Family name</Label>
-          <Input id="family-name" name="name" required maxLength={100} />
+          <Input
+            id="family-name"
+            name="name"
+            required
+            maxLength={100}
+            className="h-11"
+          />
         </div>
         {createError ? (
           <p className="mt-3 text-sm text-destructive">{createError}</p>
@@ -108,7 +114,7 @@ export function FamilyActions() {
         <h2 className="text-lg font-semibold">Join with invite</h2>
         <div className="mt-5 space-y-2">
           <Label htmlFor="invite-code">Invite code</Label>
-          <Input id="invite-code" name="inviteCode" required />
+          <Input id="invite-code" name="inviteCode" required className="h-11" />
         </div>
         {joinError ? (
           <p className="mt-3 text-sm text-destructive">{joinError}</p>

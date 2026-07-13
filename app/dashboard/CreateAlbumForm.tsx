@@ -58,12 +58,12 @@ export function CreateAlbumForm({ familyId }: { familyId: string }) {
           required
           maxLength={100}
           placeholder="New album name"
-          className="h-10 flex-1 text-sm"
+          className="h-11 flex-1 text-sm"
         />
         <Button
           type="submit"
           disabled={isCreating}
-          className="h-10 shrink-0 text-sm"
+          className="h-11 shrink-0 text-sm"
         >
           {isCreating ? "Creating..." : "Create album"}
         </Button>

@@ -15,7 +15,7 @@ export function SignOutButton() {
       type="button"
       variant="outline"
       onClick={() => signOut({ callbackUrl: "/login" })}
-      className="h-10 text-sm"
+      className="h-11 text-sm"
     >
       Sign out
     </Button>
