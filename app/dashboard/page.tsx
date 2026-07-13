@@ -10,15 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CreateAlbumForm } from "./CreateAlbumForm";
-import { DeleteFamilyButton } from "./DeleteFamilyButton";
 import { FamilyActions } from "./FamilyActions";
 import { SignOutButton } from "./SignOutButton";
 
 /**
  * Authenticated dashboard. Server component so it can fetch the caller's
- * family memberships (with nested albums/members) directly via Prisma
- * before rendering, instead of round-tripping through a client-side fetch.
+ * family memberships directly via Prisma before rendering. Kept as a thin
+ * index — each family's real detail (members, albums, settings) lives at
+ * /families/[familyId] so this page doesn't grow unbounded per family.
  */
 export default async function DashboardPage() {
   const session = await auth();
@@ -34,12 +33,8 @@ export default async function DashboardPage() {
     include: {
       family: {
         include: {
-          albums: {
-            select: { id: true, title: true },
-          },
-          members: {
-            select: { id: true },
-          },
+          albums: { select: { id: true } },
+          members: { select: { id: true } },
         },
       },
     },
@@ -88,65 +83,36 @@ export default async function DashboardPage() {
             ) : (
               <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {memberships.map((membership) => (
-                  <Card key={membership.id}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-4">
-                        <CardTitle className="text-lg">
-                          {membership.family.name}
-                        </CardTitle>
-                        <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-                          {membership.role}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <dl className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <dt className="text-muted-foreground">Members</dt>
-                          <dd className="mt-1 font-semibold">
-                            {membership.family.members.length}
-                          </dd>
+                  <Link key={membership.id} href={`/families/${membership.family.id}`}>
+                    <Card className="h-full transition hover:border-primary">
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-4">
+                          <CardTitle className="text-lg">
+                            {membership.family.name}
+                          </CardTitle>
+                          <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+                            {membership.role}
+                          </span>
                         </div>
-                        <div>
-                          <dt className="text-muted-foreground">Albums</dt>
-                          <dd className="mt-1 font-semibold">
-                            {membership.family.albums.length}
-                          </dd>
-                        </div>
-                      </dl>
-                      {membership.family.albums.length > 0 ? (
-                        <ul className="mt-5 space-y-2">
-                          {membership.family.albums.map((album) => (
-                            <li key={album.id}>
-                              <Link
-                                href={`/albums/${album.id}`}
-                                className="block rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:border-primary hover:text-primary"
-                              >
-                                {album.title}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      {membership.role === "ADMIN" ? (
-                        <>
-                          <div className="mt-5 rounded-md bg-muted p-3">
-                            <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                              Invite code
-                            </p>
-                            <p className="mt-1 break-all font-mono text-sm">
-                              {membership.family.inviteCode}
-                            </p>
+                      </CardHeader>
+                      <CardContent>
+                        <dl className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <dt className="text-muted-foreground">Members</dt>
+                            <dd className="mt-1 font-semibold">
+                              {membership.family.members.length}
+                            </dd>
                           </div>
-                          <CreateAlbumForm familyId={membership.family.id} />
-                          <DeleteFamilyButton
-                            familyId={membership.family.id}
-                            familyName={membership.family.name}
-                          />
-                        </>
-                      ) : null}
-                    </CardContent>
-                  </Card>
+                          <div>
+                            <dt className="text-muted-foreground">Albums</dt>
+                            <dd className="mt-1 font-semibold">
+                              {membership.family.albums.length}
+                            </dd>
+                          </div>
+                        </dl>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 ))}
               </div>
             )}
