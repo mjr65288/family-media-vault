@@ -8,6 +8,9 @@ import { AuthenticatedShell } from "@/components/AuthenticatedShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateAlbumForm } from "./CreateAlbumForm";
 import { DeleteFamilyButton } from "./DeleteFamilyButton";
+import { MemberList } from "./MemberList";
+import { RenameFamilyForm } from "./RenameFamilyForm";
+import { RegenerateInviteCodeButton } from "./RegenerateInviteCodeButton";
 
 /**
  * Family hub: settings + albums for a single family. Split out of the
@@ -33,7 +36,13 @@ export default async function FamilyDetailPage({
     where: { id: familyId },
     include: {
       albums: { select: { id: true, title: true }, orderBy: { createdAt: "desc" } },
-      members: { select: { id: true } },
+      members: {
+        select: {
+          id: true,
+          role: true,
+          user: { select: { id: true, name: true, email: true } },
+        },
+      },
     },
   });
 
@@ -72,8 +81,12 @@ export default async function FamilyDetailPage({
           </Link>
 
           <header className="mt-4 flex flex-col gap-2 border-b border-border pb-6 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-3xl font-semibold">{family.name}</h1>
+            <div className="min-w-0 flex-1">
+              {isAdmin ? (
+                <RenameFamilyForm familyId={family.id} familyName={family.name} />
+              ) : (
+                <h1 className="text-3xl font-semibold">{family.name}</h1>
+              )}
               <p className="mt-2 text-sm text-muted-foreground">
                 {family.members.length} member
                 {family.members.length === 1 ? "" : "s"} &middot;{" "}
@@ -96,6 +109,9 @@ export default async function FamilyDetailPage({
                     <p className="mt-1 break-all font-mono text-sm">
                       {family.inviteCode}
                     </p>
+                    <div className="mt-3">
+                      <RegenerateInviteCodeButton familyId={family.id} />
+                    </div>
                   </div>
                   <div className="mt-5">
                     <DeleteFamilyButton familyId={family.id} familyName={family.name} />
@@ -104,6 +120,18 @@ export default async function FamilyDetailPage({
               </Card>
             </section>
           ) : null}
+
+          <section className="mt-8">
+            <h2 className="text-xl font-semibold">Members</h2>
+            <div className="mt-5">
+              <MemberList
+                familyId={family.id}
+                members={family.members}
+                currentUserId={session.user.id}
+                isAdmin={isAdmin}
+              />
+            </div>
+          </section>
 
           <section className="mt-8">
             <div className="flex items-end justify-between gap-4">
