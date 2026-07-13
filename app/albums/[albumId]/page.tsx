@@ -6,27 +6,8 @@ import { requireFamilyMembership } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { AuthenticatedShell } from "@/components/AuthenticatedShell";
 import { DeleteAlbumButton } from "./DeleteAlbumButton";
+import { MediaGrid } from "./MediaGrid";
 import { UploadForm } from "./UploadForm";
-
-/** Static placeholder icon shown in place of a thumbnail for video media. */
-function VideoPlaceholderIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-10 w-10 text-muted-foreground"
-    >
-      <path
-        d="M4 5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <path d="m10 9 5 3-5 3V9Z" fill="currentColor" />
-      <path d="M17 8h4M17 16h4" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
 
 /**
  * Album detail page: shows an album's media grid and upload form, gated by
@@ -110,46 +91,12 @@ export default async function AlbumDetailPage({
           <section className="mt-8">
             <h2 className="text-xl font-semibold">Media</h2>
 
-            {album.media.length === 0 ? (
-              <div className="mt-5 rounded-lg border border-dashed border-border bg-card p-8 text-center">
-                <h3 className="text-lg font-semibold">No media yet</h3>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                  Upload a photo or video to get started.
-                </p>
-              </div>
-            ) : (
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {album.media.map((item) => (
-                  <a
-                    key={item.id}
-                    href={`/api/media/${item.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block overflow-hidden rounded-lg border border-border bg-card shadow-sm"
-                  >
-                    {item.type === "PHOTO" ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={`/api/media/${item.id}`}
-                        alt=""
-                        loading="lazy"
-                        className="aspect-square w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 bg-muted">
-                        <VideoPlaceholderIcon />
-                        <span className="rounded-md bg-foreground px-2 py-0.5 text-xs font-semibold text-background">
-                          VIDEO
-                        </span>
-                      </div>
-                    )}
-                    <p className="px-2 py-1 text-xs text-muted-foreground">
-                      {new Date(item.createdAt).toLocaleDateString()}
-                    </p>
-                  </a>
-                ))}
-              </div>
-            )}
+            <MediaGrid
+              media={album.media}
+              isAdmin={
+                membership.status === "ok" && membership.role === "ADMIN"
+              }
+            />
           </section>
         </div>
       </main>
