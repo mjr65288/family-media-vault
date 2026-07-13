@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { requireFamilyMembership } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { contentTypeForKey, getStream } from "@/lib/storage";
+import { contentTypeForKey, deleteFile, getStream } from "@/lib/storage";
 
 // Uses fs streams via lib/storage — requires the Node runtime.
 export const runtime = "nodejs";
@@ -73,4 +73,63 @@ export async function GET(
       "Cache-Control": "private, no-store",
     },
   });
+}
+
+/**
+ * Deletes a single Media item. The disk file is removed AFTER the DB
+ * delete succeeds, using the file key read beforehand — mirrors the
+ * "read keys before DB delete, delete files after" pattern used by the
+ * album cascade delete in app/api/albums/[albumId]/route.ts.
+ *
+ * Requires an authenticated session AND ADMIN role in the media's owning
+ * family (same restriction as album deletion).
+ *
+ * Status codes: 401 unauthenticated, 404 media doesn't exist, 403 not a
+ * family admin, 204 deleted.
+ */
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ mediaId: string }> }
+) {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { mediaId } = await params;
+
+  const media = await prisma.media.findUnique({
+    where: { id: mediaId },
+    select: {
+      fileUrl: true,
+      album: { select: { familyId: true } },
+    },
+  });
+
+  if (!media) {
+    // 404 here (media doesn't exist), distinct from the 403 below (media
+    // exists, requester just isn't a family admin) — see MembershipResult
+    // convention in lib/auth-helpers.ts.
+    return NextResponse.json({ error: "Media not found" }, { status: 404 });
+  }
+
+  const membership = await requireFamilyMembership(
+    userId,
+    media.album.familyId
+  );
+
+  if (membership.status !== "ok" || membership.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Only family admins can delete media" },
+      { status: 403 }
+    );
+  }
+
+  await prisma.media.delete({ where: { id: mediaId } });
+
+  await deleteFile(media.fileUrl);
+
+  return new NextResponse(null, { status: 204 });
 }
