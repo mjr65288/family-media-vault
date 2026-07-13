@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 // Client-side pre-check mirrors the server caps for fast UX feedback; the
 // server remains authoritative.
 const MAX_PHOTO_BYTES = 15 * 1024 * 1024; // 15 MB
@@ -66,28 +70,24 @@ export function UploadForm({ albumId }: { albumId: string }) {
   return (
     <form
       onSubmit={(event) => void onSubmit(event)}
-      className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
+      className="rounded-lg border border-border bg-card p-5 shadow-sm"
     >
       <h2 className="text-lg font-semibold">Upload media</h2>
-      <label htmlFor="media-file" className="mt-5 block text-sm font-medium">
-        Photo or video
-      </label>
-      <input
-        id="media-file"
-        name="file"
-        type="file"
-        accept="image/*,video/*"
-        required
-        className="mt-2 block w-full text-sm text-zinc-700 file:mr-4 file:rounded-md file:border-0 file:bg-zinc-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
-      />
-      {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
-      <button
-        type="submit"
-        disabled={isUploading}
-        className="mt-5 h-11 w-full rounded-md bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <div className="mt-5 space-y-2">
+        <Label htmlFor="media-file">Photo or video</Label>
+        <Input
+          id="media-file"
+          name="file"
+          type="file"
+          accept="image/*,video/*"
+          required
+          className="h-auto file:mr-4 file:h-8 file:rounded-md file:border-0 file:bg-primary file:px-3 file:text-sm file:font-semibold file:text-primary-foreground"
+        />
+      </div>
+      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+      <Button type="submit" disabled={isUploading} className="mt-5 h-11 w-full text-sm">
         {isUploading ? "Uploading..." : "Upload"}
-      </button>
+      </Button>
     </form>
   );
 }
