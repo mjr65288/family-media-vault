@@ -125,3 +125,78 @@ export async function DELETE(
 
   return new NextResponse(null, { status: 204 });
 }
+
+/**
+ * Renames an Album. Body: `{ title: string }`.
+ *
+ * Requires an authenticated session AND ADMIN role in the album's family
+ * (same restriction as album creation/deletion).
+ *
+ * Status codes: 401 unauthenticated, 400 missing/invalid title, 404 album
+ * doesn't exist, 403 not a family admin, 200 ok.
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ albumId: string }> }
+) {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { albumId } = await params;
+
+  const album = await prisma.album.findUnique({
+    where: { id: albumId },
+    select: { familyId: true },
+  });
+
+  if (!album) {
+    return NextResponse.json({ error: "Album not found" }, { status: 404 });
+  }
+
+  const membership = await requireFamilyMembership(userId, album.familyId);
+
+  if (membership.status !== "ok" || membership.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Only family admins can rename albums" },
+      { status: 403 }
+    );
+  }
+
+  let body: unknown;
+
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const title =
+    typeof body === "object" &&
+    body !== null &&
+    "title" in body &&
+    typeof body.title === "string"
+      ? body.title.trim()
+      : "";
+
+  if (!title) {
+    return NextResponse.json({ error: "Title is required" }, { status: 400 });
+  }
+
+  if (title.length > 100) {
+    return NextResponse.json({ error: "Album title is invalid" }, { status: 400 });
+  }
+
+  const updated = await prisma.album.update({
+    where: { id: albumId },
+    data: { title },
+  });
+
+  return NextResponse.json(
+    { id: updated.id, title: updated.title },
+    { status: 200 }
+  );
+}
