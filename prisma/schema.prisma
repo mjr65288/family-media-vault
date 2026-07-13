@@ -41,7 +41,7 @@ model FamilyMember {
   userId   String
   familyId String
   user     User   @relation(fields: [userId], references: [id])
-  family   Family @relation(fields: [familyId], references: [id])
+  family   Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
 
   @@unique([userId, familyId])
 }
@@ -57,7 +57,7 @@ model Album {
   createdAt DateTime @default(now())
 
   familyId String
-  family   Family  @relation(fields: [familyId], references: [id])
+  family   Family  @relation(fields: [familyId], references: [id], onDelete: Cascade)
   media    Media[]
 }
 
@@ -70,7 +70,7 @@ model Media {
 
   albumId      String
   uploadedById String
-  album        Album  @relation(fields: [albumId], references: [id])
+  album        Album  @relation(fields: [albumId], references: [id], onDelete: Cascade)
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
 }
 

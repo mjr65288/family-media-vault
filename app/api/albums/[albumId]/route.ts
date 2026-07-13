@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { requireFamilyMembership } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { deleteFile } from "@/lib/storage";
 
 /**
  * Fetches an Album (with its Media items) by id.
@@ -69,4 +70,58 @@ export async function GET(
     },
     { status: 200 }
   );
+}
+
+/**
+ * Deletes an Album and all its Media (DB rows cascade via `onDelete:
+ * Cascade` on Media.album). Disk files are removed AFTER the DB delete
+ * succeeds, using file keys read beforehand — if a file removal fails
+ * partway through, the DB is already consistent and cleanup is retried
+ * safely since deleteFile() is idempotent.
+ *
+ * Requires an authenticated session AND ADMIN role in the album's family
+ * (same restriction as album creation).
+ *
+ * Status codes: 401 unauthenticated, 404 album doesn't exist, 403 not a
+ * family admin, 204 deleted.
+ */
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ albumId: string }> }
+) {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { albumId } = await params;
+
+  const album = await prisma.album.findUnique({
+    where: { id: albumId },
+    select: {
+      familyId: true,
+      media: { select: { fileUrl: true } },
+    },
+  });
+
+  if (!album) {
+    return NextResponse.json({ error: "Album not found" }, { status: 404 });
+  }
+
+  const membership = await requireFamilyMembership(userId, album.familyId);
+
+  if (membership.status !== "ok" || membership.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Only family admins can delete albums" },
+      { status: 403 }
+    );
+  }
+
+  await prisma.album.delete({ where: { id: albumId } });
+
+  await Promise.all(album.media.map((item) => deleteFile(item.fileUrl)));
+
+  return new NextResponse(null, { status: 204 });
 }
