@@ -3,7 +3,10 @@ import Link from "next/link";
 import { MobileNav } from "@/components/MobileNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-const NAV_LINKS = [{ href: "/dashboard", label: "Dashboard" }];
+const NAV_LINKS = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/account", label: "Account" },
+];
 
 /**
  * Shared header/nav for authenticated pages (dashboard, album detail).
