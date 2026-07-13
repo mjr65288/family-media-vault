@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
 /**
  * Inline "create album" form shown on a family card. Only rendered for
  * ADMIN members (the API also enforces this — see POST /api/albums).
@@ -49,23 +52,23 @@ export function CreateAlbumForm({ familyId }: { familyId: string }) {
         <label htmlFor={`album-title-${familyId}`} className="sr-only">
           New album title
         </label>
-        <input
+        <Input
           id={`album-title-${familyId}`}
           name="title"
           required
           maxLength={100}
           placeholder="New album name"
-          className="h-10 flex-1 rounded-md border border-zinc-300 px-3 text-sm outline-none transition focus:border-teal-700 focus:ring-4 focus:ring-teal-100"
+          className="h-10 flex-1 text-sm"
         />
-        <button
+        <Button
           type="submit"
           disabled={isCreating}
-          className="h-10 shrink-0 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-10 shrink-0 text-sm"
         >
           {isCreating ? "Creating..." : "Create album"}
-        </button>
+        </Button>
       </div>
-      {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+      {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
     </form>
   );
 }

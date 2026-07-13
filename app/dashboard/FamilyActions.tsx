@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 /**
  * Dashboard controls for creating a new family or joining one via invite
  * code. Both forms share a single `pendingAction` state so only one submit
@@ -69,29 +73,23 @@ export function FamilyActions() {
             "create"
           );
         }}
-        className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
+        className="rounded-lg border border-border bg-card p-5 shadow-sm"
       >
         <h2 className="text-lg font-semibold">Create a family</h2>
-        <label htmlFor="family-name" className="mt-5 block text-sm font-medium">
-          Family name
-        </label>
-        <input
-          id="family-name"
-          name="name"
-          required
-          maxLength={100}
-          className="mt-2 h-11 w-full rounded-md border border-zinc-300 px-3 outline-none transition focus:border-teal-700 focus:ring-4 focus:ring-teal-100"
-        />
+        <div className="mt-5 space-y-2">
+          <Label htmlFor="family-name">Family name</Label>
+          <Input id="family-name" name="name" required maxLength={100} />
+        </div>
         {createError ? (
-          <p className="mt-3 text-sm text-red-700">{createError}</p>
+          <p className="mt-3 text-sm text-destructive">{createError}</p>
         ) : null}
-        <button
+        <Button
           type="submit"
           disabled={pendingAction !== null}
-          className="mt-5 h-11 w-full rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-5 h-11 w-full text-sm"
         >
           {pendingAction === "create" ? "Creating..." : "Create family"}
-        </button>
+        </Button>
       </form>
 
       <form
@@ -105,28 +103,24 @@ export function FamilyActions() {
             "join"
           );
         }}
-        className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"
+        className="rounded-lg border border-border bg-card p-5 shadow-sm"
       >
         <h2 className="text-lg font-semibold">Join with invite</h2>
-        <label htmlFor="invite-code" className="mt-5 block text-sm font-medium">
-          Invite code
-        </label>
-        <input
-          id="invite-code"
-          name="inviteCode"
-          required
-          className="mt-2 h-11 w-full rounded-md border border-zinc-300 px-3 outline-none transition focus:border-teal-700 focus:ring-4 focus:ring-teal-100"
-        />
+        <div className="mt-5 space-y-2">
+          <Label htmlFor="invite-code">Invite code</Label>
+          <Input id="invite-code" name="inviteCode" required />
+        </div>
         {joinError ? (
-          <p className="mt-3 text-sm text-red-700">{joinError}</p>
+          <p className="mt-3 text-sm text-destructive">{joinError}</p>
         ) : null}
-        <button
+        <Button
           type="submit"
+          variant="secondary"
           disabled={pendingAction !== null}
-          className="mt-5 h-11 w-full rounded-md bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-5 h-11 w-full text-sm"
         >
           {pendingAction === "join" ? "Joining..." : "Join family"}
-        </button>
+        </Button>
       </form>
     </div>
   );
