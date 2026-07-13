@@ -6,6 +6,7 @@ import { requireFamilyMembership } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { AuthenticatedShell } from "@/components/AuthenticatedShell";
 import { DeleteAlbumButton } from "./DeleteAlbumButton";
+import { RenameAlbumButton } from "./RenameAlbumButton";
 import { UploadForm } from "./UploadForm";
 
 /** Static placeholder icon shown in place of a thumbnail for video media. */
@@ -99,7 +100,10 @@ export default async function AlbumDetailPage({
               <h1 className="text-3xl font-semibold">{album.title}</h1>
             </div>
             {membership.status === "ok" && membership.role === "ADMIN" ? (
-              <DeleteAlbumButton albumId={album.id} albumTitle={album.title} />
+              <div className="flex flex-wrap gap-2">
+                <RenameAlbumButton albumId={album.id} albumTitle={album.title} />
+                <DeleteAlbumButton albumId={album.id} albumTitle={album.title} />
+              </div>
             ) : null}
           </header>
 
